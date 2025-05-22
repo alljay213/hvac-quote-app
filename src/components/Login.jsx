@@ -18,8 +18,9 @@ export default function Login() {
         emailRef.current.value,
         passwordRef.current.value
       );
-      navigate("/");
+      navigate("/dashboard"); // Ensure this path matches your dashboard route
     } catch (err) {
+      console.error("Login failed:", err.code, err.message);
       setError("Login failed: Invalid email or password.");
     }
   };
