@@ -2,6 +2,17 @@ import { useState } from "react";
 import { db } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
+// Sanitize helper
+const sanitize = (str) => {
+  if (typeof str !== "string") return "";
+  return str
+    .replace(/<[^>]*>?/gm, "") // Remove HTML tags
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .trim();
+};
+
 export default function QuoteBuilder() {
   const [client, setClient] = useState({
     name: "",
@@ -70,13 +81,25 @@ export default function QuoteBuilder() {
       return;
     }
 
+    const safeClient = {
+      name: sanitize(client.name),
+      phone: sanitize(client.phone),
+      email: sanitize(client.email),
+      street: sanitize(client.street),
+      unit: sanitize(client.unit),
+      city: sanitize(client.city),
+      province: sanitize(client.province),
+      postalCode: sanitize(client.postalCode),
+    };
+
     const parsedItems = itemList.map((item) => {
       const cost = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity) || 1;
       const margin = parseFloat(item.margin) || 0;
       const sellingPrice = cost * quantity * (1 + margin / 100);
       return {
-        ...item,
+        catNo: sanitize(item.catNo),
+        description: sanitize(item.description),
         price: cost,
         quantity,
         margin,
@@ -90,7 +113,7 @@ export default function QuoteBuilder() {
 
     try {
       await addDoc(collection(db, "quotes"), {
-        client,
+        client: safeClient,
         items: parsedItems,
         serviceFee: fee,
         total: parseFloat(totalValue.toFixed(2)),
