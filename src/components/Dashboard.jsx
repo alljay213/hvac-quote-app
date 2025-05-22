@@ -30,7 +30,7 @@ export default function Dashboard() {
         <div className="text-lg font-semibold">Welcome, {firstName}</div>
         <button
           onClick={handleLogout}
-          className="text-sm text-blue-600 underline hover:text-blue-800"
+          className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-gray-300"
         >
           Logout
         </button>
