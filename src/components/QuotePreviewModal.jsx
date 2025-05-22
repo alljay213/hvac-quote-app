@@ -7,7 +7,7 @@ export default function QuotePreviewModal({
   onConfirm,
 }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 text-black">
       <div className="bg-white w-full max-w-3xl rounded shadow-lg p-6 overflow-y-auto max-h-[90vh] relative">
         <h3 className="text-xl font-bold mb-4">Quote Preview</h3>
 
