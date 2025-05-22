@@ -58,19 +58,72 @@ export default function QuoteBuilder() {
 
       {/* Client Info */}
       <div className="grid gap-4 mb-6">
-        {["name", "phone", "email", "address"].map((field) => (
+        <div className="grid gap-4 mb-6">
           <input
-            key={field}
             type="text"
-            name={field}
-            placeholder={`Client ${
-              field.charAt(0).toUpperCase() + field.slice(1)
-            }`}
-            value={client[field]}
+            name="name"
+            placeholder="Client Name"
+            value={client.name}
             onChange={handleClientChange}
             className="border border-gray-300 p-2 rounded w-full"
           />
-        ))}
+          <input
+            type="text"
+            name="phone"
+            placeholder="Phone Number"
+            value={client.phone}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            value={client.email}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="street"
+            placeholder="Street Address"
+            value={client.street || ""}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="unit"
+            placeholder="Suite / Unit # (optional)"
+            value={client.unit || ""}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="city"
+            placeholder="City"
+            value={client.city || ""}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="province"
+            placeholder="Province"
+            value={client.province || ""}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="postalCode"
+            placeholder="Postal Code"
+            value={client.postalCode || ""}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+        </div>
       </div>
 
       {/* Item Inputs */}
