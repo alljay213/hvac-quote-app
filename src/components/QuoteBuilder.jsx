@@ -1,134 +1,157 @@
-import { useEffect, useState } from "react";
-import { db } from "../firebase";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  getDocs,
-} from "firebase/firestore";
-
-const serviceOptions = {
-  "AC Repair": 150,
-  "Furnace Tune-Up": 120,
-  "Full HVAC Install": 5000,
-  "Thermostat Replacement": 250,
-};
-
-const TAX_RATE = 0.13;
-const SERVICE_FEE_RATE = 0.05;
+import { useState } from "react";
 
 export default function QuoteBuilder() {
-  const [selectedService, setSelectedService] = useState("");
-  const [basePrice, setBasePrice] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [serviceFee, setServiceFee] = useState(0);
+  const [client, setClient] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+  });
+
+  const [equipmentList, setEquipmentList] = useState([
+    { catNo: "", description: "", price: "", margin: "" },
+  ]);
+
+  const [serviceFee, setServiceFee] = useState("");
   const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [quotes, setQuotes] = useState([]);
 
-  useEffect(() => {
-    const fetchQuotes = async () => {
-      const snapshot = await getDocs(collection(db, "quotes"));
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setQuotes(data);
-    };
-
-    fetchQuotes();
-  }, []);
-
-  const handleServiceChange = (e) => {
-    const service = e.target.value;
-    setSelectedService(service);
-    const price = serviceOptions[service] || 0;
-    const taxAmt = price * TAX_RATE;
-    const fee = price * SERVICE_FEE_RATE;
-    setBasePrice(price);
-    setTax(taxAmt);
-    setServiceFee(fee);
-    setTotal(price + taxAmt + fee);
+  const handleClientChange = (e) => {
+    setClient({ ...client, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async () => {
-    if (!selectedService) return alert("Please select a service.");
-    setLoading(true);
-    try {
-      await addDoc(collection(db, "quotes"), {
-        service: selectedService,
-        estimate: total,
-        createdAt: serverTimestamp(),
-      });
-      alert("Quote saved!");
-      setSelectedService("");
-      setBasePrice(0);
-      setTax(0);
-      setServiceFee(0);
-      setTotal(0);
-    } catch (err) {
-      alert("Failed to save quote: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleEquipmentChange = (index, field, value) => {
+    const updated = [...equipmentList];
+    updated[index][field] = value;
+    setEquipmentList(updated);
+  };
+
+  const addEquipmentRow = () => {
+    setEquipmentList([
+      ...equipmentList,
+      { catNo: "", description: "", price: "", margin: "" },
+    ]);
+  };
+
+  const removeEquipmentRow = (index) => {
+    const updated = equipmentList.filter((_, i) => i !== index);
+    setEquipmentList(updated);
+  };
+
+  const calculateTotal = () => {
+    let subtotal = equipmentList.reduce((sum, item) => {
+      const cost = parseFloat(item.price) || 0;
+      const margin = parseFloat(item.margin) || 0;
+      const markedUp = cost + (cost * margin) / 100;
+      return sum + markedUp;
+    }, 0);
+
+    const fee = parseFloat(serviceFee) || 0;
+    setTotal(subtotal + fee);
   };
 
   return (
-    <div className="w-full max-w-md bg-white text-gray-900 shadow-xl rounded-lg p-6 sm:p-8 transition-all">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">
-        HVAC Quote Calculator
-      </h2>
+    <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-md">
+      <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
 
-      <label className="block mb-2 text-sm font-medium text-gray-700">
-        Select Service
-      </label>
-      <select
-        className="w-full p-3 border border-gray-300 rounded-lg mb-4 bg-white text-gray-900"
-        value={selectedService}
-        onChange={handleServiceChange}
-      >
-        <option value="">-- Choose a Service --</option>
-        {Object.entries(serviceOptions).map(([name, price]) => (
-          <option key={name} value={name}>
-            {name} - ${price}
-          </option>
+      {/* Client Info */}
+      <div className="grid gap-4 mb-6">
+        {["name", "phone", "email", "address"].map((field) => (
+          <input
+            key={field}
+            type="text"
+            name={field}
+            placeholder={`Client ${
+              field.charAt(0).toUpperCase() + field.slice(1)
+            }`}
+            value={client[field]}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
         ))}
-      </select>
-
-      <div className="text-sm sm:text-base text-gray-700 space-y-1 mb-6">
-        <p>Base: ${basePrice.toFixed(2)}</p>
-        <p>Tax (13%): ${tax.toFixed(2)}</p>
-        <p>Service Fee (5%): ${serviceFee.toFixed(2)}</p>
-        <p className="font-semibold text-black">Total: ${total.toFixed(2)}</p>
       </div>
+
+      {/* Equipment Inputs */}
+      <h3 className="font-semibold mb-2">Equipment</h3>
+      {equipmentList.map((item, index) => (
+        <div key={index} className="grid grid-cols-5 gap-3 mb-3 items-center">
+          <input
+            placeholder="Cat#"
+            value={item.catNo}
+            onChange={(e) =>
+              handleEquipmentChange(index, "catNo", e.target.value)
+            }
+            className="p-2 border rounded"
+          />
+          <input
+            placeholder="Description"
+            value={item.description}
+            onChange={(e) =>
+              handleEquipmentChange(index, "description", e.target.value)
+            }
+            className="p-2 border rounded"
+          />
+          <input
+            type="number"
+            placeholder="Price"
+            value={item.price}
+            onChange={(e) =>
+              handleEquipmentChange(index, "price", e.target.value)
+            }
+            className="p-2 border rounded"
+          />
+          <input
+            type="number"
+            placeholder="Margin %"
+            value={item.margin}
+            onChange={(e) =>
+              handleEquipmentChange(index, "margin", e.target.value)
+            }
+            className="p-2 border rounded"
+          />
+          <button
+            onClick={() => removeEquipmentRow(index)}
+            className="text-red-500 text-sm hover:underline"
+          >
+            ✖ Remove
+          </button>
+        </div>
+      ))}
 
       <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className={`w-full py-3 font-semibold text-white rounded-lg transition 
-        ${loading ? "bg-blue-300" : "bg-blue-600 hover:bg-blue-700"}`}
+        onClick={addEquipmentRow}
+        className="text-blue-600 underline text-sm mb-4"
       >
-        {loading ? "Saving..." : "Save Quote"}
+        + Add Equipment
       </button>
 
-      {/* Quote History */}
-      <div className="mt-8">
-        <h3 className="text-lg font-bold mb-4">Quote History</h3>
-        <ul className="space-y-3">
-          {quotes.map((q) => (
-            <li
-              key={q.id}
-              className="border border-gray-300 rounded p-3 bg-gray-50 text-gray-800"
-            >
-              <p>🛠️ {q.service}</p>
-              <p>💲 ${q.estimate.toFixed(2)}</p>
-              <p className="text-sm text-gray-500">
-                📅 {q.createdAt?.toDate().toLocaleString()}
-              </p>
-            </li>
-          ))}
-        </ul>
+      {/* Service Fee */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Service Fee ($)</label>
+        <input
+          type="number"
+          value={serviceFee}
+          onChange={(e) => setServiceFee(e.target.value)}
+          className="p-2 border rounded w-full"
+        />
       </div>
+
+      {/* Total Calculation */}
+      <div className="mb-6">
+        <button
+          onClick={calculateTotal}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          Calculate Total
+        </button>
+        <p className="mt-2 text-lg font-bold">
+          Total Quote: ${total.toFixed(2)}
+        </p>
+      </div>
+
+      {/* Save Quote Placeholder */}
+      <button className="w-full bg-blue-600 text-white py-3 rounded">
+        Save Quote (Firebase later)
+      </button>
     </div>
   );
 }
