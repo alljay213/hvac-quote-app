@@ -1,18 +1,21 @@
+import { useState } from "react";
 import { db } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-
-import { useState } from "react";
 
 export default function QuoteBuilder() {
   const [client, setClient] = useState({
     name: "",
     phone: "",
     email: "",
-    address: "",
+    street: "",
+    unit: "",
+    city: "",
+    province: "",
+    postalCode: "",
   });
 
   const [itemList, setItemList] = useState([
-    { catNo: "", description: "", price: "", margin: "" },
+    { catNo: "", description: "", price: "", quantity: "", margin: "" },
   ]);
 
   const [serviceFee, setServiceFee] = useState("");
@@ -31,7 +34,7 @@ export default function QuoteBuilder() {
   const addItemRow = () => {
     setItemList([
       ...itemList,
-      { catNo: "", description: "", price: "", margin: "" },
+      { catNo: "", description: "", price: "", quantity: "", margin: "" },
     ]);
   };
 
@@ -43,8 +46,9 @@ export default function QuoteBuilder() {
   const calculateTotal = () => {
     let subtotal = itemList.reduce((sum, item) => {
       const cost = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity) || 1;
       const margin = parseFloat(item.margin) || 0;
-      const markedUp = cost + (cost * margin) / 100;
+      const markedUp = cost * quantity * (1 + margin / 100);
       return sum + markedUp;
     }, 0);
 
@@ -52,84 +56,146 @@ export default function QuoteBuilder() {
     setTotal(subtotal + fee);
   };
 
+  const saveQuote = async () => {
+    if (
+      !client.name ||
+      !client.phone ||
+      !client.email ||
+      !client.street ||
+      !client.city ||
+      !client.province ||
+      !client.postalCode
+    ) {
+      alert("Please fill out all required client fields.");
+      return;
+    }
+
+    const parsedItems = itemList.map((item) => {
+      const cost = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity) || 1;
+      const margin = parseFloat(item.margin) || 0;
+      const sellingPrice = cost * quantity * (1 + margin / 100);
+      return {
+        ...item,
+        price: cost,
+        quantity,
+        margin,
+        sellingPrice: parseFloat(sellingPrice.toFixed(2)),
+      };
+    });
+
+    const fee = parseFloat(serviceFee) || 0;
+    const totalValue =
+      parsedItems.reduce((sum, item) => sum + item.sellingPrice, 0) + fee;
+
+    try {
+      await addDoc(collection(db, "quotes"), {
+        client,
+        items: parsedItems,
+        serviceFee: fee,
+        total: parseFloat(totalValue.toFixed(2)),
+        createdAt: serverTimestamp(),
+      });
+
+      alert("Quote saved successfully!");
+
+      // Reset form
+      setClient({
+        name: "",
+        phone: "",
+        email: "",
+        street: "",
+        unit: "",
+        city: "",
+        province: "",
+        postalCode: "",
+      });
+      setItemList([
+        { catNo: "", description: "", price: "", quantity: "", margin: "" },
+      ]);
+      setServiceFee("");
+      setTotal(0);
+    } catch (err) {
+      alert("Error saving quote: " + err.message);
+    }
+  };
+
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-md rounded-md">
+    <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-md">
       <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
 
       {/* Client Info */}
       <div className="grid gap-4 mb-6">
-        <div className="grid gap-4 mb-6">
-          <input
-            type="text"
-            name="name"
-            placeholder="Client Name"
-            value={client.name}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="phone"
-            placeholder="Phone Number"
-            value={client.phone}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={client.email}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="street"
-            placeholder="Street Address"
-            value={client.street || ""}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="unit"
-            placeholder="Suite / Unit # (optional)"
-            value={client.unit || ""}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="city"
-            placeholder="City"
-            value={client.city || ""}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="province"
-            placeholder="Province"
-            value={client.province || ""}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="postalCode"
-            placeholder="Postal Code"
-            value={client.postalCode || ""}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-        </div>
+        <input
+          type="text"
+          name="name"
+          placeholder="Client Name"
+          value={client.name}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="phone"
+          placeholder="Phone Number"
+          value={client.phone}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email Address"
+          value={client.email}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="street"
+          placeholder="Street Address"
+          value={client.street}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="unit"
+          placeholder="Suite / Unit # (optional)"
+          value={client.unit}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={client.city}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="province"
+          placeholder="Province"
+          value={client.province}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
+        <input
+          type="text"
+          name="postalCode"
+          placeholder="Postal Code"
+          value={client.postalCode}
+          onChange={handleClientChange}
+          className="border border-gray-300 p-2 rounded w-full"
+        />
       </div>
 
-      {/* Item Inputs */}
-      <h3 className="font-semibold mb-2">Item</h3>
+      {/* Items */}
+      <h3 className="font-semibold mb-2">Items</h3>
       {itemList.map((item, index) => (
-        <div key={index} className="grid grid-cols-5 gap-3 mb-3 items-center">
+        <div key={index} className="grid grid-cols-6 gap-3 mb-3 items-center">
           <input
             placeholder="Cat#"
             value={item.catNo}
@@ -153,6 +219,15 @@ export default function QuoteBuilder() {
           />
           <input
             type="number"
+            placeholder="Qty"
+            value={item.quantity}
+            onChange={(e) =>
+              handleItemChange(index, "quantity", e.target.value)
+            }
+            className="p-2 border rounded"
+          />
+          <input
+            type="number"
             placeholder="Margin %"
             value={item.margin}
             onChange={(e) => handleItemChange(index, "margin", e.target.value)}
@@ -162,7 +237,7 @@ export default function QuoteBuilder() {
             onClick={() => removeItemRow(index)}
             className="text-red-500 text-sm hover:underline"
           >
-            ✖ Remove
+            ✖
           </button>
         </div>
       ))}
@@ -185,7 +260,7 @@ export default function QuoteBuilder() {
         />
       </div>
 
-      {/* Total Calculation */}
+      {/* Total */}
       <div className="mb-6">
         <button
           onClick={calculateTotal}
@@ -198,57 +273,9 @@ export default function QuoteBuilder() {
         </p>
       </div>
 
-      {/* Save Quote Placeholder */}
+      {/* Save */}
       <button
-        onClick={async () => {
-          if (
-            !client.name ||
-            !client.phone ||
-            !client.email ||
-            !client.address
-          ) {
-            alert("Please fill in all client fields.");
-            return;
-          }
-
-          const parsedItems = itemList.map((item) => {
-            const cost = parseFloat(item.price) || 0;
-            const margin = parseFloat(item.margin) || 0;
-            const sellingPrice = cost + (cost * margin) / 100;
-            return {
-              ...item,
-              price: cost,
-              margin,
-              sellingPrice: parseFloat(sellingPrice.toFixed(2)),
-            };
-          });
-
-          const fee = parseFloat(serviceFee) || 0;
-          const totalValue =
-            parsedItems.reduce((sum, item) => sum + item.sellingPrice, 0) + fee;
-
-          try {
-            await addDoc(collection(db, "quotes"), {
-              client,
-              items: parsedItems,
-              serviceFee: fee,
-              total: parseFloat(totalValue.toFixed(2)),
-              createdAt: serverTimestamp(),
-            });
-
-            alert("Quote saved successfully!");
-
-            // Reset form
-            setClient({ name: "", phone: "", email: "", address: "" });
-            setItemList([
-              { catNo: "", description: "", price: "", margin: "" },
-            ]);
-            setServiceFee("");
-            setTotal(0);
-          } catch (err) {
-            alert("Error saving quote: " + err.message);
-          }
-        }}
+        onClick={saveQuote}
         className="w-full bg-blue-600 text-white py-3 rounded"
       >
         Save Quote
