@@ -3,16 +3,23 @@ import { db } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import QuotePreviewModal from "./QuotePreviewModal";
 
-// Sanitize helper
-const sanitize = (str) => {
-  if (typeof str !== "string") return "";
-  return str
-    .replace(/<[^>]*>?/gm, "") // Remove HTML tags
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .trim();
-};
+// Constants
+const TAX_RATE = 0.13;
+const sanitize = (str) =>
+  typeof str === "string"
+    ? str
+        .replace(/<[^>]*>?/gm, "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .trim()
+    : "";
+
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+  }).format(amount);
 
 export default function QuoteBuilder() {
   const [client, setClient] = useState({
@@ -31,8 +38,8 @@ export default function QuoteBuilder() {
   ]);
 
   const [serviceFee, setServiceFee] = useState("");
+  const [tax, setTax] = useState(0);
   const [total, setTotal] = useState(0);
-
   const [showPreview, setShowPreview] = useState(false);
 
   const handleClientChange = (e) => {
@@ -58,42 +65,39 @@ export default function QuoteBuilder() {
   };
 
   const calculateTotal = () => {
-    let subtotal = itemList.reduce((sum, item) => {
+    const itemTotal = itemList.reduce((sum, item) => {
       const cost = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity) || 1;
       const margin = parseFloat(item.margin) || 0;
-      const markedUp = cost * quantity * (1 + margin / 100);
-      return sum + markedUp;
+      return sum + cost * quantity * (1 + margin / 100);
     }, 0);
 
     const fee = parseFloat(serviceFee) || 0;
-    setTotal(subtotal + fee);
+    const subtotal = itemTotal + fee;
+    const taxAmt = subtotal * TAX_RATE;
+
+    setTax(taxAmt);
+    setTotal(subtotal + taxAmt);
   };
 
   const saveQuote = async () => {
-    if (
-      !client.name ||
-      !client.phone ||
-      !client.email ||
-      !client.street ||
-      !client.city ||
-      !client.province ||
-      !client.postalCode
-    ) {
+    const required = [
+      "name",
+      "phone",
+      "email",
+      "street",
+      "city",
+      "province",
+      "postalCode",
+    ];
+    if (required.some((key) => !client[key])) {
       alert("Please fill out all required client fields.");
       return;
     }
 
-    const safeClient = {
-      name: sanitize(client.name),
-      phone: sanitize(client.phone),
-      email: sanitize(client.email),
-      street: sanitize(client.street),
-      unit: sanitize(client.unit),
-      city: sanitize(client.city),
-      province: sanitize(client.province),
-      postalCode: sanitize(client.postalCode),
-    };
+    const safeClient = Object.fromEntries(
+      Object.entries(client).map(([k, v]) => [k, sanitize(v)])
+    );
 
     const parsedItems = itemList.map((item) => {
       const cost = parseFloat(item.price) || 0;
@@ -111,157 +115,127 @@ export default function QuoteBuilder() {
     });
 
     const fee = parseFloat(serviceFee) || 0;
-    const totalValue =
-      parsedItems.reduce((sum, item) => sum + item.sellingPrice, 0) + fee;
+    const itemTotal = parsedItems.reduce(
+      (sum, item) => sum + item.sellingPrice,
+      0
+    );
+    const subtotal = itemTotal + fee;
+    const taxAmt = subtotal * TAX_RATE;
+    const totalValue = subtotal + taxAmt;
 
     try {
       await addDoc(collection(db, "quotes"), {
         client: safeClient,
         items: parsedItems,
         serviceFee: fee,
+        tax: parseFloat(taxAmt.toFixed(2)),
         total: parseFloat(totalValue.toFixed(2)),
         createdAt: serverTimestamp(),
       });
 
       alert("Quote saved successfully!");
-
-      // Reset form
-      setClient({
-        name: "",
-        phone: "",
-        email: "",
-        street: "",
-        unit: "",
-        city: "",
-        province: "",
-        postalCode: "",
-      });
-      setItemList([
-        { catNo: "", description: "", price: "", quantity: "", margin: "" },
-      ]);
-      setServiceFee("");
-      setTotal(0);
+      resetForm();
     } catch (err) {
       alert("Error saving quote: " + err.message);
     }
   };
 
+  const resetForm = () => {
+    setClient({
+      name: "",
+      phone: "",
+      email: "",
+      street: "",
+      unit: "",
+      city: "",
+      province: "",
+      postalCode: "",
+    });
+    setItemList([
+      { catNo: "", description: "", price: "", quantity: "", margin: "" },
+    ]);
+    setServiceFee("");
+    setTax(0);
+    setTotal(0);
+  };
+
+  const isDisabled =
+    !client.name ||
+    !client.phone ||
+    !client.email ||
+    !client.street ||
+    !client.city ||
+    !client.province ||
+    !client.postalCode ||
+    itemList.length === 0;
+
   return (
     <>
       <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-md text-black">
-        <h2 className="text-2xl font-bold mb-4 ">HVAC Quote Builder</h2>
+        <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
 
         {/* Client Info */}
-        <div className="grid gap-4 mb-6 ">
-          <input
-            type="text"
-            name="name"
-            placeholder="Client Name"
-            value={client.name}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="phone"
-            placeholder="Phone Number"
-            value={client.phone}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={client.email}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="street"
-            placeholder="Street Address"
-            value={client.street}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="unit"
-            placeholder="Suite / Unit # (optional)"
-            value={client.unit}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="city"
-            placeholder="City"
-            value={client.city}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="province"
-            placeholder="Province"
-            value={client.province}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
-          <input
-            type="text"
-            name="postalCode"
-            placeholder="Postal Code"
-            value={client.postalCode}
-            onChange={handleClientChange}
-            className="border border-gray-300 p-2 rounded w-full"
-          />
+        <div className="grid gap-4 mb-6">
+          {[
+            "name",
+            "phone",
+            "email",
+            "street",
+            "unit",
+            "city",
+            "province",
+            "postalCode",
+          ].map((field) => (
+            <input
+              key={field}
+              type="text"
+              name={field}
+              placeholder={
+                field === "unit"
+                  ? "Suite / Unit # (optional)"
+                  : field.charAt(0).toUpperCase() + field.slice(1)
+              }
+              value={client[field]}
+              onChange={handleClientChange}
+              className="border border-gray-300 p-2 rounded w-full"
+            />
+          ))}
         </div>
+
+        <div className="border-t border-gray-300 my-6" />
 
         {/* Items */}
         <h3 className="font-semibold mb-2">Items</h3>
         {itemList.map((item, index) => (
           <div key={index} className="grid grid-cols-6 gap-3 mb-3 items-center">
-            <input
-              placeholder="Cat#"
-              value={item.catNo}
-              onChange={(e) => handleItemChange(index, "catNo", e.target.value)}
-              className="p-2 border rounded"
-            />
-            <input
-              placeholder="Description"
-              value={item.description}
-              onChange={(e) =>
-                handleItemChange(index, "description", e.target.value)
-              }
-              className="p-2 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Price"
-              value={item.price}
-              onChange={(e) => handleItemChange(index, "price", e.target.value)}
-              className="p-2 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Qty"
-              value={item.quantity}
-              onChange={(e) =>
-                handleItemChange(index, "quantity", e.target.value)
-              }
-              className="p-2 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Margin %"
-              value={item.margin}
-              onChange={(e) =>
-                handleItemChange(index, "margin", e.target.value)
-              }
-              className="p-2 border rounded"
-            />
+            {["catNo", "description", "price", "quantity", "margin"].map(
+              (field) => (
+                <input
+                  key={field}
+                  placeholder={
+                    {
+                      catNo: "Cat#",
+                      description: "Description",
+                      price: "Price",
+                      quantity: "Qty",
+                      margin: "Margin %",
+                    }[field]
+                  }
+                  type={
+                    field === "price" ||
+                    field === "quantity" ||
+                    field === "margin"
+                      ? "number"
+                      : "text"
+                  }
+                  value={item[field]}
+                  onChange={(e) =>
+                    handleItemChange(index, field, e.target.value)
+                  }
+                  className="p-2 border rounded"
+                />
+              )
+            )}
             <button
               onClick={() => removeItemRow(index)}
               className="text-red-500 text-sm hover:underline"
@@ -270,13 +244,14 @@ export default function QuoteBuilder() {
             </button>
           </div>
         ))}
-
         <button
           onClick={addItemRow}
           className="text-blue-600 underline text-sm mb-4"
         >
           + Add Item
         </button>
+
+        <div className="border-t border-gray-300 my-6" />
 
         {/* Service Fee */}
         <div className="mb-4">
@@ -289,32 +264,38 @@ export default function QuoteBuilder() {
           />
         </div>
 
-        {/* Total */}
-        <div className="mb-6">
+        {/* Totals */}
+        <div className="mb-6 space-y-1">
           <button
             onClick={calculateTotal}
             className="bg-green-600 text-white px-4 py-2 rounded"
           >
             Calculate Total
           </button>
-          <p className="mt-2 text-lg font-bold">
-            Total Quote: ${total.toFixed(2)}
+          <p>Tax (13%): {formatCurrency(tax)}</p>
+          <p className="text-lg font-bold">
+            Total Quote: {formatCurrency(total)}
           </p>
         </div>
 
-        {/* Save */}
         <button
           onClick={() => setShowPreview(true)}
-          className="w-full bg-blue-600 text-white py-3 rounded"
+          disabled={isDisabled}
+          className={`w-full py-3 rounded text-white font-semibold ${
+            isDisabled
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
           Preview Quote
         </button>
       </div>
+
       {showPreview && (
         <QuotePreviewModal
           client={client}
           items={itemList}
-          serviceFee={serviceFee}
+          serviceFee={parseFloat(serviceFee)}
           total={total}
           onClose={() => setShowPreview(false)}
           onConfirm={() => {
