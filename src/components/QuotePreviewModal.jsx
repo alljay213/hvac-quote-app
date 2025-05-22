@@ -9,13 +9,6 @@ export default function QuotePreviewModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white w-full max-w-3xl rounded shadow-lg p-6 overflow-y-auto max-h-[90vh] relative">
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-4 text-xl font-bold"
-        >
-          ✖
-        </button>
-
         <h3 className="text-xl font-bold mb-4">Quote Preview</h3>
 
         <div className="mb-4">
