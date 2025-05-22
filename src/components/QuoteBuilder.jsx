@@ -74,16 +74,16 @@ export default function QuoteBuilder() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-lg p-6 sm:p-8 transition-all">
-      <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-gray-800 dark:text-white">
+    <div className="w-full max-w-md bg-white text-gray-900 shadow-xl rounded-lg p-6 sm:p-8 transition-all">
+      <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-center">
         HVAC Quote Calculator
       </h2>
 
-      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label className="block mb-2 text-sm font-medium text-gray-700">
         Select Service
       </label>
       <select
-        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        className="w-full p-3 border border-gray-300 rounded-lg mb-4 bg-white text-gray-900"
         value={selectedService}
         onChange={handleServiceChange}
       >
@@ -95,13 +95,11 @@ export default function QuoteBuilder() {
         ))}
       </select>
 
-      <div className="text-sm sm:text-base text-gray-700 dark:text-gray-300 space-y-1 mb-6">
+      <div className="text-sm sm:text-base text-gray-700 space-y-1 mb-6">
         <p>Base: ${basePrice.toFixed(2)}</p>
         <p>Tax (13%): ${tax.toFixed(2)}</p>
         <p>Service Fee (5%): ${serviceFee.toFixed(2)}</p>
-        <p className="font-semibold text-black dark:text-white">
-          Total: ${total.toFixed(2)}
-        </p>
+        <p className="font-semibold text-black">Total: ${total.toFixed(2)}</p>
       </div>
 
       <button
@@ -115,18 +113,16 @@ export default function QuoteBuilder() {
 
       {/* Quote History */}
       <div className="mt-8">
-        <h3 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">
-          Quote History
-        </h3>
+        <h3 className="text-lg font-bold mb-4">Quote History</h3>
         <ul className="space-y-3">
           {quotes.map((q) => (
             <li
               key={q.id}
-              className="border dark:border-gray-600 rounded p-3 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white"
+              className="border border-gray-300 rounded p-3 bg-gray-50 text-gray-800"
             >
               <p>🛠️ {q.service}</p>
               <p>💲 ${q.estimate.toFixed(2)}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500">
                 📅 {q.createdAt?.toDate().toLocaleString()}
               </p>
             </li>
