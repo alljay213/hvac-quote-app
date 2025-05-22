@@ -49,6 +49,18 @@ export default function QuoteBuilder() {
   const handleItemChange = (index, field, value) => {
     const updated = [...itemList];
     updated[index][field] = value;
+
+    // If user enters '00000' as Cat#, autofill for labor-only job
+    if (field === "catNo" && value === "00000") {
+      updated[index] = {
+        catNo: "00000",
+        description: "Labor Only",
+        price: "0",
+        quantity: "0",
+        margin: "0",
+      };
+    }
+
     setItemList(updated);
   };
 
@@ -159,6 +171,14 @@ export default function QuoteBuilder() {
     setTotal(0);
   };
 
+  const hasValidItem = itemList.some((item) => {
+    const isLaborOnly = item.catNo === "00000";
+    const hasChargeableValues =
+      item.catNo && item.description && parseFloat(item.price) > 0;
+
+    return isLaborOnly || hasChargeableValues;
+  });
+
   const isDisabled =
     !client.name ||
     !client.phone ||
@@ -167,7 +187,7 @@ export default function QuoteBuilder() {
     !client.city ||
     !client.province ||
     !client.postalCode ||
-    itemList.length === 0;
+    !hasValidItem;
 
   return (
     <>
@@ -207,41 +227,67 @@ export default function QuoteBuilder() {
         {/* Items */}
         <h3 className="font-semibold mb-2">Items</h3>
         {itemList.map((item, index) => (
-          <div key={index} className="grid grid-cols-6 gap-3 mb-3 items-center">
-            {["catNo", "description", "price", "quantity", "margin"].map(
-              (field) => (
-                <input
-                  key={field}
-                  placeholder={
-                    {
-                      catNo: "Cat#",
-                      description: "Description",
-                      price: "Price",
-                      quantity: "Qty",
-                      margin: "Margin %",
-                    }[field]
-                  }
-                  type={
-                    field === "price" ||
-                    field === "quantity" ||
-                    field === "margin"
-                      ? "number"
-                      : "text"
-                  }
-                  value={item[field]}
-                  onChange={(e) =>
-                    handleItemChange(index, field, e.target.value)
-                  }
-                  className="p-2 border rounded"
-                />
-              )
-            )}
-            <button
-              onClick={() => removeItemRow(index)}
-              className="text-red-500 text-sm hover:underline"
-            >
-              ✖
-            </button>
+          <div key={index} className="mb-4 border p-3 rounded-md bg-gray-50">
+            {/* Row 1: Cat# and Description */}
+            <div className="grid grid-cols-3 gap-3 mb-2">
+              <input
+                placeholder="Cat#"
+                value={item.catNo}
+                onChange={(e) =>
+                  handleItemChange(index, "catNo", e.target.value)
+                }
+                className="p-2 border rounded col-span-1"
+              />
+              <input
+                placeholder="Description"
+                value={item.description}
+                onChange={(e) =>
+                  handleItemChange(index, "description", e.target.value)
+                }
+                className="p-2 border rounded col-span-2"
+              />
+            </div>
+
+            {/* Row 2: Price, Qty, Margin */}
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <input
+                type="number"
+                placeholder="Price"
+                value={item.price}
+                onChange={(e) =>
+                  handleItemChange(index, "price", e.target.value)
+                }
+                className="p-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="Qty"
+                value={item.quantity}
+                onChange={(e) =>
+                  handleItemChange(index, "quantity", e.target.value)
+                }
+                className="p-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="Margin %"
+                value={item.margin}
+                onChange={(e) =>
+                  handleItemChange(index, "margin", e.target.value)
+                }
+                className="p-2 border rounded"
+              />
+            </div>
+
+            {/* Remove Button */}
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={() => removeItemRow(index)}
+                className="text-red-500 text-sm hover:underline"
+              >
+                ✖ Remove
+              </button>
+            </div>
           </div>
         ))}
         <button
