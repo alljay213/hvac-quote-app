@@ -56,7 +56,7 @@ export default function QuoteBuilder() {
         catNo: "00000",
         description: "Labor Only",
         price: "0",
-        quantity: "0",
+        quantity: "1",
         margin: "0",
       };
     }
