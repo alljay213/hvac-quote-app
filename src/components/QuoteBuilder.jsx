@@ -2,6 +2,7 @@ import { useState } from "react";
 import { db } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import QuotePreviewModal from "./QuotePreviewModal";
+import { useNavigate } from "react-router-dom";
 
 // Constants
 const TAX_RATE = 0.13;
@@ -179,6 +180,13 @@ export default function QuoteBuilder() {
     return isLaborOnly || hasChargeableValues;
   });
 
+  const handleCancel = () => {
+    resetForm();
+    navigate("/dashboard");
+  };
+
+  const navigate = useNavigate();
+
   const isDisabled =
     !client.name ||
     !client.phone ||
@@ -192,7 +200,15 @@ export default function QuoteBuilder() {
   return (
     <>
       <div className="w-full max-w-[500px] min-h-[95vh] mx-auto p-6 bg-white shadow-md rounded-md text-black">
-        <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">HVAC Quote Builder</h2>
+          <button
+            onClick={handleCancel}
+            className="text-sm bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+        </div>
 
         {/* Client Info */}
         <div className="grid gap-4 mb-6">
