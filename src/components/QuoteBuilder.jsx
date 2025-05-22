@@ -135,8 +135,8 @@ export default function QuoteBuilder() {
     const subtotal = itemTotal + fee;
     const taxAmt = subtotal * TAX_RATE;
     const totalValue = subtotal + taxAmt;
-    const { currentUser } = useAuth();
 
+    const { currentUser } = useAuth();
     try {
       await addDoc(collection(db, "quotes"), {
         userId: currentUser.uid, // ✅ Associate quote with logged-in user
