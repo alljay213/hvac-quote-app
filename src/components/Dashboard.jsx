@@ -6,15 +6,16 @@ export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Guard: Redirect to login if not authenticated
   useEffect(() => {
-    if (!currentUser) navigate("/");
+    if (!currentUser) {
+      navigate("/");
+    }
   }, [currentUser, navigate]);
 
   const handleLogout = async () => {
     try {
-      await logout(); // Ensures the user session is cleared
-      navigate("/"); // Redirect to login
+      await logout();
+      navigate("/");
     } catch (err) {
       console.error("Logout failed:", err.message);
     }
