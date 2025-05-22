@@ -1,32 +1,38 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getAuth, signOut, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 const AuthContext = createContext();
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const auth = getAuth();
-
-  const logout = () => {
-    return signOut(auth);
-  };
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (user) {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setUserProfile(docSnap.data());
+        }
+      } else {
+        setUserProfile(null);
+      }
     });
 
     return unsubscribe;
-  }, [auth]);
+  }, []);
 
-  const value = {
-    currentUser,
-    logout,
-  };
+  const logout = () => signOut(auth);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ currentUser, userProfile, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

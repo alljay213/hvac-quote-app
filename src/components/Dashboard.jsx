@@ -21,13 +21,15 @@ export default function Dashboard() {
     }
   };
 
-  const firstName = currentUser?.firstName || currentUser?.email?.split("@")[0];
+  const { userProfile } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900 p-4 sm:px-6">
       {/* Header */}
       <header className="flex justify-between items-center mb-6">
-        <div className="text-lg font-semibold">Welcome, {firstName}</div>
+        <div className="text-lg font-semibold">
+          Welcome, {userProfile?.firstName || "User"}
+        </div>
         <button
           onClick={handleLogout}
           className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-gray-300"
