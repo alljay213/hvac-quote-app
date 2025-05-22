@@ -221,21 +221,41 @@ export default function QuoteBuilder() {
             "city",
             "province",
             "postalCode",
-          ].map((field) => (
-            <input
-              key={field}
-              type="text"
-              name={field}
-              placeholder={
-                field === "unit"
-                  ? "Suite / Unit # (optional)"
-                  : field.charAt(0).toUpperCase() + field.slice(1)
-              }
-              value={client[field]}
-              onChange={handleClientChange}
-              className="border border-gray-300 p-2 rounded w-full"
-            />
-          ))}
+          ].map((field) => {
+            const labelMap = {
+              name: "Name",
+              phone: "Phone",
+              email: "Email",
+              street: "Street",
+              unit: "Suite / Unit # (optional)",
+              city: "City",
+              province: "Province",
+              postalCode: "Postal Code",
+            };
+
+            const typeMap = {
+              name: "text",
+              phone: "tel",
+              email: "email",
+              street: "text",
+              unit: "text",
+              city: "text",
+              province: "text",
+              postalCode: "text",
+            };
+
+            return (
+              <input
+                key={field}
+                type={typeMap[field]}
+                name={field}
+                placeholder={labelMap[field]}
+                value={client[field]}
+                onChange={handleClientChange}
+                className="border border-gray-300 p-2 rounded w-full"
+              />
+            );
+          })}
         </div>
 
         <div className="border-t border-gray-300 my-6" />
