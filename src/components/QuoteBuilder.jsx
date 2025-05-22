@@ -149,7 +149,7 @@ export default function QuoteBuilder() {
   return (
     <>
       <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-md">
-        <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
+        <h2 className="text-2xl font-bold mb-96">HVAC Quote Builder</h2>
 
         {/* Client Info */}
         <div className="grid gap-4 mb-6">
