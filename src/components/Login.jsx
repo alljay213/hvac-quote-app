@@ -12,13 +12,20 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Light sanitization
+    const email = emailRef.current.value.trim().toLowerCase();
+    const password = passwordRef.current.value.trim();
+
+    // Basic validation
+    if (!email || !password) {
+      setError("Both email and password are required.");
+      return;
+    }
+
     try {
-      await signInWithEmailAndPassword(
-        auth,
-        emailRef.current.value,
-        passwordRef.current.value
-      );
-      navigate("/dashboard"); // Ensure this path matches your dashboard route
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/dashboard");
     } catch (err) {
       console.error("Login failed:", err.code, err.message);
       setError("Login failed: Invalid email or password.");
