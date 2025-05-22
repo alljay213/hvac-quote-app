@@ -135,19 +135,36 @@ export default function QuoteBuilder() {
     const subtotal = itemTotal + fee;
     const taxAmt = subtotal * TAX_RATE;
     const totalValue = subtotal + taxAmt;
+    const { currentUser } = useAuth();
 
     try {
       await addDoc(collection(db, "quotes"), {
+        userId: currentUser.uid, // ✅ Associate quote with logged-in user
         client: safeClient,
         items: parsedItems,
         serviceFee: fee,
-        tax: parseFloat(taxAmt.toFixed(2)),
         total: parseFloat(totalValue.toFixed(2)),
         createdAt: serverTimestamp(),
       });
 
       alert("Quote saved successfully!");
-      resetForm();
+
+      // Reset form after save
+      setClient({
+        name: "",
+        phone: "",
+        email: "",
+        street: "",
+        unit: "",
+        city: "",
+        province: "",
+        postalCode: "",
+      });
+      setItemList([
+        { catNo: "", description: "", price: "", quantity: "", margin: "" },
+      ]);
+      setServiceFee("");
+      setTotal(0);
     } catch (err) {
       alert("Error saving quote: " + err.message);
     }
