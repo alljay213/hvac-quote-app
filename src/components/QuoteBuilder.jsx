@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { db } from "../firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import QuotePreviewModal from "./QuotePreviewModal";
 
 // Sanitize helper
 const sanitize = (str) => {
@@ -146,165 +147,182 @@ export default function QuoteBuilder() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-md">
-      <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
+    <>
+      <div className="max-w-5xl mx-auto p-6 bg-white shadow-md rounded-md">
+        <h2 className="text-2xl font-bold mb-4">HVAC Quote Builder</h2>
 
-      {/* Client Info */}
-      <div className="grid gap-4 mb-6">
-        <input
-          type="text"
-          name="name"
-          placeholder="Client Name"
-          value={client.name}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          name="phone"
-          placeholder="Phone Number"
-          value={client.phone}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          value={client.email}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          name="street"
-          placeholder="Street Address"
-          value={client.street}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          name="unit"
-          placeholder="Suite / Unit # (optional)"
-          value={client.unit}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          name="city"
-          placeholder="City"
-          value={client.city}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          name="province"
-          placeholder="Province"
-          value={client.province}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-        <input
-          type="text"
-          name="postalCode"
-          placeholder="Postal Code"
-          value={client.postalCode}
-          onChange={handleClientChange}
-          className="border border-gray-300 p-2 rounded w-full"
-        />
-      </div>
-
-      {/* Items */}
-      <h3 className="font-semibold mb-2">Items</h3>
-      {itemList.map((item, index) => (
-        <div key={index} className="grid grid-cols-6 gap-3 mb-3 items-center">
+        {/* Client Info */}
+        <div className="grid gap-4 mb-6">
           <input
-            placeholder="Cat#"
-            value={item.catNo}
-            onChange={(e) => handleItemChange(index, "catNo", e.target.value)}
-            className="p-2 border rounded"
+            type="text"
+            name="name"
+            placeholder="Client Name"
+            value={client.name}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
           />
           <input
-            placeholder="Description"
-            value={item.description}
-            onChange={(e) =>
-              handleItemChange(index, "description", e.target.value)
-            }
-            className="p-2 border rounded"
+            type="text"
+            name="phone"
+            placeholder="Phone Number"
+            value={client.phone}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
           />
           <input
-            type="number"
-            placeholder="Price"
-            value={item.price}
-            onChange={(e) => handleItemChange(index, "price", e.target.value)}
-            className="p-2 border rounded"
+            type="email"
+            name="email"
+            placeholder="Email Address"
+            value={client.email}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
           />
           <input
-            type="number"
-            placeholder="Qty"
-            value={item.quantity}
-            onChange={(e) =>
-              handleItemChange(index, "quantity", e.target.value)
-            }
-            className="p-2 border rounded"
+            type="text"
+            name="street"
+            placeholder="Street Address"
+            value={client.street}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
           />
           <input
-            type="number"
-            placeholder="Margin %"
-            value={item.margin}
-            onChange={(e) => handleItemChange(index, "margin", e.target.value)}
-            className="p-2 border rounded"
+            type="text"
+            name="unit"
+            placeholder="Suite / Unit # (optional)"
+            value={client.unit}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
           />
-          <button
-            onClick={() => removeItemRow(index)}
-            className="text-red-500 text-sm hover:underline"
-          >
-            ✖
-          </button>
+          <input
+            type="text"
+            name="city"
+            placeholder="City"
+            value={client.city}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="province"
+            placeholder="Province"
+            value={client.province}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
+          <input
+            type="text"
+            name="postalCode"
+            placeholder="Postal Code"
+            value={client.postalCode}
+            onChange={handleClientChange}
+            className="border border-gray-300 p-2 rounded w-full"
+          />
         </div>
-      ))}
 
-      <button
-        onClick={addItemRow}
-        className="text-blue-600 underline text-sm mb-4"
-      >
-        + Add Item
-      </button>
+        {/* Items */}
+        <h3 className="font-semibold mb-2">Items</h3>
+        {itemList.map((item, index) => (
+          <div key={index} className="grid grid-cols-6 gap-3 mb-3 items-center">
+            <input
+              placeholder="Cat#"
+              value={item.catNo}
+              onChange={(e) => handleItemChange(index, "catNo", e.target.value)}
+              className="p-2 border rounded"
+            />
+            <input
+              placeholder="Description"
+              value={item.description}
+              onChange={(e) =>
+                handleItemChange(index, "description", e.target.value)
+              }
+              className="p-2 border rounded"
+            />
+            <input
+              type="number"
+              placeholder="Price"
+              value={item.price}
+              onChange={(e) => handleItemChange(index, "price", e.target.value)}
+              className="p-2 border rounded"
+            />
+            <input
+              type="number"
+              placeholder="Qty"
+              value={item.quantity}
+              onChange={(e) =>
+                handleItemChange(index, "quantity", e.target.value)
+              }
+              className="p-2 border rounded"
+            />
+            <input
+              type="number"
+              placeholder="Margin %"
+              value={item.margin}
+              onChange={(e) =>
+                handleItemChange(index, "margin", e.target.value)
+              }
+              className="p-2 border rounded"
+            />
+            <button
+              onClick={() => removeItemRow(index)}
+              className="text-red-500 text-sm hover:underline"
+            >
+              ✖
+            </button>
+          </div>
+        ))}
 
-      {/* Service Fee */}
-      <div className="mb-4">
-        <label className="block font-medium mb-1">Service Fee ($)</label>
-        <input
-          type="number"
-          value={serviceFee}
-          onChange={(e) => setServiceFee(e.target.value)}
-          className="p-2 border rounded w-full"
-        />
-      </div>
-
-      {/* Total */}
-      <div className="mb-6">
         <button
-          onClick={calculateTotal}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          onClick={addItemRow}
+          className="text-blue-600 underline text-sm mb-4"
         >
-          Calculate Total
+          + Add Item
         </button>
-        <p className="mt-2 text-lg font-bold">
-          Total Quote: ${total.toFixed(2)}
-        </p>
-      </div>
 
-      {/* Save */}
-      <button
-        onClick={() => setShowPreview(true)}
-        className="w-full bg-blue-600 text-white py-3 rounded"
-      >
-        Preview Quote
-      </button>
-    </div>
+        {/* Service Fee */}
+        <div className="mb-4">
+          <label className="block font-medium mb-1">Service Fee ($)</label>
+          <input
+            type="number"
+            value={serviceFee}
+            onChange={(e) => setServiceFee(e.target.value)}
+            className="p-2 border rounded w-full"
+          />
+        </div>
+
+        {/* Total */}
+        <div className="mb-6">
+          <button
+            onClick={calculateTotal}
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Calculate Total
+          </button>
+          <p className="mt-2 text-lg font-bold">
+            Total Quote: ${total.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Save */}
+        <button
+          onClick={() => setShowPreview(true)}
+          className="w-full bg-blue-600 text-white py-3 rounded"
+        >
+          Preview Quote
+        </button>
+      </div>
+      {showPreview && (
+        <QuotePreviewModal
+          client={client}
+          items={itemList}
+          serviceFee={serviceFee}
+          total={total}
+          onClose={() => setShowPreview(false)}
+          onConfirm={() => {
+            saveQuote();
+            setShowPreview(false);
+          }}
+        />
+      )}
+    </>
   );
 }
