@@ -1,3 +1,6 @@
+import { db } from "../firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+
 import { useState } from "react";
 
 export default function QuoteBuilder() {
@@ -143,9 +146,53 @@ export default function QuoteBuilder() {
       </div>
 
       {/* Save Quote Placeholder */}
-      <button className="w-full bg-blue-600 text-white py-3 rounded">
-        Save Quote (Firebase later)
-      </button>
+      <button
+  onClick={async () => {
+    if (!client.name || !client.phone || !client.email || !client.address) {
+      alert("Please fill in all client fields.");
+      return;
+    }
+
+    const parsedItems = itemList.map(item => {
+      const cost = parseFloat(item.price) || 0;
+      const margin = parseFloat(item.margin) || 0;
+      const sellingPrice = cost + (cost * margin / 100);
+      return {
+        ...item,
+        price: cost,
+        margin,
+        sellingPrice: parseFloat(sellingPrice.toFixed(2)),
+      };
+    });
+
+    const fee = parseFloat(serviceFee) || 0;
+    const totalValue = parsedItems.reduce((sum, item) => sum + item.sellingPrice, 0) + fee;
+
+    try {
+      await addDoc(collection(db, "quotes"), {
+        client,
+        items: parsedItems,
+        serviceFee: fee,
+        total: parseFloat(totalValue.toFixed(2)),
+        createdAt: serverTimestamp(),
+      });
+
+      alert("Quote saved successfully!");
+
+      // Reset form
+      setClient({ name: "", phone: "", email: "", address: "" });
+      setItemList([{ catNo: "", description: "", price: "", margin: "" }]);
+      setServiceFee("");
+      setTotal(0);
+    } catch (err) {
+      alert("Error saving quote: " + err.message);
+    }
+  }}
+  className="w-full bg-blue-600 text-white py-3 rounded"
+>
+  Save Quote
+</button>
+
     </div>
   );
 }
