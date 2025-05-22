@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import QuoteBuilder from "./components/QuoteBuilder";
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -13,14 +14,20 @@ function App() {
   }, [darkMode]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className="p-2 m-4 bg-gray-200 dark:bg-gray-800 rounded"
-      >
-        Toggle Dark Mode
-      </button>
-      {/* Rest of your components */}
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+      <header className="flex justify-between items-center p-4 sm:px-8">
+        <h1 className="text-xl sm:text-2xl font-bold">HVAC Quote App</h1>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700"
+        >
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </button>
+      </header>
+
+      <main className="flex justify-center p-4">
+        <QuoteBuilder />
+      </main>
     </div>
   );
 }
