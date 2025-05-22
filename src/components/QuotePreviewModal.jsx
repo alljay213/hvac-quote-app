@@ -6,6 +6,25 @@ export default function QuotePreviewModal({
   onClose,
   onConfirm,
 }) {
+  const TAX_RATE = 0.13;
+
+  const itemTotal = items.reduce((sum, item) => {
+    const cost = parseFloat(item.price) || 0;
+    const qty = parseInt(item.quantity) || 1;
+    const margin = parseFloat(item.margin) || 0;
+    return sum + cost * qty * (1 + margin / 100);
+  }, 0);
+
+  const fee = parseFloat(serviceFee || 0);
+  const subtotal = itemTotal + fee;
+  const tax = subtotal * TAX_RATE;
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency: "CAD",
+    }).format(amount);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 text-black">
       <div className="bg-white w-full max-w-3xl rounded shadow-lg p-6 overflow-y-auto max-h-[90vh] relative">
@@ -52,7 +71,7 @@ export default function QuotePreviewModal({
                     <td className="p-2 border">{qty}</td>
                     <td className="p-2 border">{margin}%</td>
                     <td className="p-2 border font-medium">
-                      ${total.toFixed(2)}
+                      {formatCurrency(total)}
                     </td>
                   </tr>
                 );
@@ -61,12 +80,16 @@ export default function QuotePreviewModal({
           </table>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 text-sm space-y-1">
           <p>
-            <strong>Service Fee:</strong> $
-            {parseFloat(serviceFee || 0).toFixed(2)}
+            <strong>Service Fee:</strong> {formatCurrency(fee)}
           </p>
-          <p className="text-lg font-bold">Total Quote: ${total.toFixed(2)}</p>
+          <p>
+            <strong>Tax (13%):</strong> {formatCurrency(tax)}
+          </p>
+          <p className="text-lg font-bold">
+            Total Quote: {formatCurrency(total)}
+          </p>
         </div>
 
         <div className="flex justify-end gap-3">
