@@ -32,6 +32,8 @@ export default function QuoteBuilder() {
   const [serviceFee, setServiceFee] = useState("");
   const [total, setTotal] = useState(0);
 
+  const [showPreview, setShowPreview] = useState(false);
+
   const handleClientChange = (e) => {
     setClient({ ...client, [e.target.name]: e.target.value });
   };
@@ -298,10 +300,10 @@ export default function QuoteBuilder() {
 
       {/* Save */}
       <button
-        onClick={saveQuote}
+        onClick={() => setShowPreview(true)}
         className="w-full bg-blue-600 text-white py-3 rounded"
       >
-        Save Quote
+        Preview Quote
       </button>
     </div>
   );
