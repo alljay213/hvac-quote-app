@@ -204,7 +204,7 @@ export default function QuoteBuilder() {
           <h2 className="text-2xl font-bold">HVAC Quote Builder</h2>
           <button
             onClick={handleCancel}
-            className="text-sm bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300"
+            className="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-gray-300"
           >
             Cancel
           </button>
